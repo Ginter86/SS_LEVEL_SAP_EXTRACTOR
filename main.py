@@ -2,19 +2,26 @@ import json
 import os
 import sys
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from sap_bot import SAPExtractor
 
+def get_base_dir():
+    """Zwraca ścieżkę do folderu, w którym znajduje się skrypt lub plik .exe"""
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
 # Konfiguracja profesjonalnego loggera
-def setup_logger():
+def setup_logger(base_dir):
     logger = logging.getLogger("SAP_Extractor")
     logger.setLevel(logging.INFO)
     
     # Format logów
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     
+    log_path = os.path.join(base_dir, 'run_log.txt')
     # Zapis do pliku
-    file_handler = logging.FileHandler('run_log.txt', mode='a', encoding='utf-8')
+    file_handler = logging.FileHandler(log_path, mode='a', encoding='utf-8')
     file_handler.setFormatter(formatter)
     
     # Wypisywanie w konsoli
@@ -26,9 +33,21 @@ def setup_logger():
     return logger
 
 def get_dynamic_dates():
-    current_year = datetime.now().year
+    now = datetime.now()
+    current_year = now.year
+    
+    first_day_current_month = now.replace(day=1)
+    last_day_last_month = first_day_current_month - timedelta(days=1)
+    start_of_last_month = last_day_last_month.replace(day=1)
+    
     return {
-        "{START_OF_PREV_YEAR}": f"01.01.{current_year - 1}"
+        "{TODAY}": now.strftime("%d.%m.%Y"),
+        "{START_OF_PREV_YEAR}": f"01.01.{current_year - 1}",
+        "{END_OF_PREV_YEAR}": f"31.12.{current_year - 1}",
+        "{START_OF_CURRENT_YEAR}": f"01.01.{current_year}",
+        "{START_OF_CURRENT_MONTH}": first_day_current_month.strftime("%d.%m.%Y"),
+        "{START_OF_LAST_MONTH}": start_of_last_month.strftime("%d.%m.%Y"),
+        "{END_OF_LAST_MONTH}": last_day_last_month.strftime("%d.%m.%Y")
     }
 
 def load_config(config_path="config.json"):
@@ -56,11 +75,13 @@ def display_welcome_screen(export_dir, tables):
 
 
 def main():
-    logger = setup_logger()
+    base_dir = get_base_dir()
+    logger = setup_logger(base_dir)
     logger.info("--- Uruchomienie programu ---")
     
+    config_path = os.path.join(base_dir, "config.json")
     try:
-        config = load_config()
+        config = load_config(config_path)
     except Exception as e:
         logger.error(f"Nie można wczytać pliku config.json: {e}")
         return

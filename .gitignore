@@ -8,3 +8,6 @@ config.json
 # Cache Pythona
 __pycache__/
 *.pyc
+# Paczki wydaniowe i skrypty wdrożeniowe
+SAP_Extractor_Release.zip
+build.py
