@@ -1,0 +1,10 @@
+# Środowiska wirtualne
+venv/
+env/
+# Logi
+run_log.txt
+# Konfiguracja (lokalna)
+config.json
+# Cache Pythona
+__pycache__/
+*.pyc

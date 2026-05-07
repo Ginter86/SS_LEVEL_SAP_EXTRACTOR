@@ -1,0 +1,20 @@
+{
+    "export_directory": "C:/Sciezka/Do/Eksportu/",
+    "tables": {
+        "EBAN": [
+            {"field": "LFDAT", "value": "{START_OF_PREV_YEAR}", "option_row": 8},
+            {"field": "LOEKZ", "value": "X", "option_row": 5}
+        ],
+        "EKET": [
+            {"field": "EINDT", "value": "{START_OF_PREV_YEAR}", "option_row": 8}
+        ],
+        "MARD": [],
+        "PBED": [],
+        "PBIM": [],
+        "RESB": [
+            {"field": "BDTER", "value": "{START_OF_PREV_YEAR}", "option_row": 8},
+            {"field": "XLOEK", "value": "X", "option_row": 5},
+            {"field": "KZEAR", "value": "X", "option_row": 5}
+        ]
+    }
+}
