@@ -1,6 +1,8 @@
 # Środowiska wirtualne
 venv/
 env/
+dist/
+build/
 # Logi
 run_log.txt
 # Konfiguracja (lokalna)
