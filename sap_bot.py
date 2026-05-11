@@ -1,21 +1,24 @@
 import win32com.client
 import sys
 import time
+import pythoncom
 
 class SAPExtractor:
-    def __init__(self):
-        self.session = self._connect_to_sap()
+    def __init__(self, session_index=0):
+        # Inicjalizacja COM dla obecnego wątku (wymagane w wielowątkowości)
+        pythoncom.CoInitialize()
+        self.session = self._connect_to_sap(session_index)
         # Indeksy kolumn w Twoim układzie SE16N
         self.C_FIELD = 6  # Kolumna z Nazwą Techniczną
         self.C_LOW = 2    # Kolumna na wpisanie wartości
         self.C_OPT = 1    # Kolumna z przyciskiem opcji (=, <>)
 
-    def _connect_to_sap(self):
+    def _connect_to_sap(self, session_index):
         try:
             SapGuiAuto = win32com.client.GetObject("SAPGUI")
             application = SapGuiAuto.GetScriptingEngine
             connection = application.Children(0)
-            session = connection.Children(0)
+            session = connection.Children(session_index)
             return session
         except Exception:
             print("BŁĄD KRYTYCZNY: Nie można połączyć się z SAP.")
@@ -23,6 +26,12 @@ class SAPExtractor:
 
     def extract_table(self, table_name, filters, export_path):
         session = self.session
+        
+        # Zminimalizowanie okna, by nie wyskakiwało na wierzch i nie migało
+        try:
+            session.findById("wnd[0]").Iconify()
+        except Exception:
+            pass
         
         # Reset i wejście
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
