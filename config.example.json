@@ -1,20 +1,35 @@
 {
     "export_directory": "C:/Sciezka/Do/Eksportu/",
     "tables": {
-        "EBAN": [
-            {"field": "LFDAT", "value": "{START_OF_PREV_YEAR}", "option_row": 8},
-            {"field": "LOEKZ", "value": "X", "option_row": 5}
-        ],
-        "EKET": [
-            {"field": "EINDT", "value": "{START_OF_PREV_YEAR}", "option_row": 8}
-        ],
-        "MARD": [],
-        "PBED": [],
-        "PBIM": [],
-        "RESB": [
-            {"field": "BDTER", "value": "{START_OF_PREV_YEAR}", "option_row": 8},
-            {"field": "XLOEK", "value": "X", "option_row": 5},
-            {"field": "KZEAR", "value": "X", "option_row": 5}
-        ]
+        "EBAN": {
+            "filters": [
+                {"field": "LFDAT", "value": "{START_OF_PREV_YEAR}", "option_row": 8},
+                {"field": "LOEKZ", "value": "X", "option_row": 5}
+            ]
+        },
+        "EKET": {
+            "filters": [
+                {"field": "EINDT", "value": "{START_OF_PREV_YEAR}", "option_row": 8}
+            ]
+        },
+        "MARD": {
+            "filters": [
+                {"field": "DISKZ", "value": " ", "option_row": 3}
+            ]
+        },
+        "PBED": {
+            "filters": []
+        },
+        "PBIM": {
+            "filters": []
+        },
+        "RESB": {
+            "columns": ["MATNR", "WERKS", "BDTER", "BDMNG", "ENMNG"],
+            "filters": [
+                {"field": "BDTER", "value": "{START_OF_PREV_YEAR}", "option_row": 8},
+                {"field": "XLOEK", "value": "X", "option_row": 5},
+                {"field": "KZEAR", "value": "X", "option_row": 5}
+            ]
+        }
     }
 }

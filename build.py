@@ -25,7 +25,7 @@ def build_and_package():
     # 2. Kopiowanie wymaganych plików dla użytkownika końcowego
     # Kopiujemy config.example.json i od razu zmieniamy mu nazwę na config.json
     print("Kopiowanie pliku konfiguracyjnego (config.json)...")
-    shutil.copy("config.example.json", os.path.join(dist_dir, "config.json"))
+    shutil.copy("config.json", os.path.join(dist_dir, "config.json"))
     
     if os.path.exists("README.md"):
         print("Kopiowanie instrukcji (README.md)...")

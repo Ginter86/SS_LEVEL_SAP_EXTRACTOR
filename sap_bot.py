@@ -9,6 +9,7 @@ class SAPExtractor:
         pythoncom.CoInitialize()
         self.session = self._connect_to_sap(session_index)
         # Indeksy kolumn w Twoim układzie SE16N
+        self.C_OUTPUT = 5 # Kolumna z checkboxem "Wyjście" (Output)
         self.C_FIELD = 6  # Kolumna z Nazwą Techniczną
         self.C_LOW = 2    # Kolumna na wpisanie wartości
         self.C_OPT = 1    # Kolumna z przyciskiem opcji (=, <>)
@@ -24,8 +25,10 @@ class SAPExtractor:
             print("BŁĄD KRYTYCZNY: Nie można połączyć się z SAP.")
             sys.exit(1)
 
-    def extract_table(self, table_name, filters, export_path):
+    def extract_table(self, table_name, table_config, export_path):
         session = self.session
+        filters = table_config.get('filters', [])
+        columns = table_config.get('columns')
         
         # Zminimalizowanie okna, by nie wyskakiwało na wierzch i nie migało
         try:
@@ -41,6 +44,56 @@ class SAPExtractor:
         session.findById("wnd[0]/usr/ctxtGD-TAB").text = table_name
         session.findById("wnd[0]").sendVKey(0) 
         session.findById("wnd[0]/usr/txtGD-MAX_LINES").text = ""
+
+        # --- WYBÓR KOLUMN ---
+        column_warnings = []
+        if columns: # Jeśli lista kolumn jest zdefiniowana i niepusta
+            try:
+                # 1. Odznacz wszystko
+                session.findById("wnd[0]/tbar[1]/btn[18]").press()
+
+                # 2. Znajdź i zaznacz wybrane kolumny
+                columns_to_select_set = set(columns)
+                columns_found = set()
+                table_id_cols = "wnd[0]/usr/tblSAPLSE16NSELFIELDS_TC"
+
+                try:
+                    session.findById(table_id_cols).VerticalScrollbar.Position = 0
+                except Exception:
+                    pass # Brak paska przewijania nie jest błędem
+
+                for _ in range(50): # Wystarczająco duży zakres dla tabel z wieloma polami
+                    if columns_found == columns_to_select_set:
+                        break # Znaleziono wszystkie, wyjdź
+
+                    table_ctrl = session.findById(table_id_cols)
+                    visible_rows = table_ctrl.VisibleRowCount
+                    
+                    for i in range(visible_rows):
+                        try:
+                            field_cell = session.findById(f"{table_id_cols}/txtGS_SELFIELDS-FIELDNAME[{self.C_FIELD},{i}]")
+                            current_field = field_cell.text.strip()
+                            
+                            if current_field in columns_to_select_set and current_field not in columns_found:
+                                checkbox = session.findById(f"{table_id_cols}/chkGS_SELFIELDS-MARK[{self.C_OUTPUT},{i}]")
+                                checkbox.selected = True
+                                columns_found.add(current_field)
+                        except Exception:
+                            continue
+                    
+                    try:
+                        current_pos = table_ctrl.VerticalScrollbar.Position
+                        table_ctrl.VerticalScrollbar.Position = current_pos + visible_rows
+                        if session.findById(table_id_cols).VerticalScrollbar.Position == current_pos:
+                            break # Koniec przewijania
+                    except Exception:
+                        break # Brak paska lub inny błąd
+                
+                not_found_cols = columns_to_select_set - columns_found
+                if not_found_cols:
+                    column_warnings.append(f"Nie znaleziono kolumn: {', '.join(not_found_cols)}.")
+            except Exception as e:
+                return {"status": "error", "msg": f"Błąd podczas wyboru kolumn: {str(e)}"}
 
         # Aplikowanie filtrów
         if filters:
@@ -98,7 +151,7 @@ class SAPExtractor:
                         break
 
                 if not found:
-                    return {"status": "warning", "msg": f"Nie znaleziono pola {field_to_find}."}
+                    return {"status": "warning", "msg": f"Nie znaleziono pola filtru {field_to_find}."}
 
         # Wykonanie (F8)
         session.findById("wnd[0]/tbar[1]/btn[8]").press()
@@ -136,4 +189,7 @@ class SAPExtractor:
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
         
+        if column_warnings:
+            return {"status": "warning", "msg": f"Zapisano, ale z ostrzeżeniami: {' '.join(column_warnings)}"}
+
         return {"status": "success", "msg": "Zapisano pomyślnie."}

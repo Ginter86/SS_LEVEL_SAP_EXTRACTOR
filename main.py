@@ -171,19 +171,20 @@ def display_welcome_screen(export_dir, tables, session_count):
         sys.exit(0)
     print("--- Rozpoczynanie pracy ---")
 
-def process_table(table_name, filters, export_dir, session_queue, dynamic_vars, logger):
+def process_table(table_name, table_config, export_dir, session_queue, dynamic_vars, logger):
     # Pobierz wolny indeks okna SAP z kolejki
     session_index = session_queue.get()
     start_time = time.time()
     try:
         logger.info(f"Rozpoczęto przetwarzanie tabeli: {table_name} [Sesja SAP: {session_index}]")
         # Podmiana dynamicznych wartości z configu
+        filters = table_config.get('filters', [])
         for f in filters:
             if f['value'] in dynamic_vars:
                 f['value'] = dynamic_vars[f['value']]
                 
         bot = SAPExtractor(session_index=session_index)
-        result = bot.extract_table(table_name, filters, export_dir)
+        result = bot.extract_table(table_name, table_config, export_dir)
         elapsed_time = time.time() - start_time
         return table_name, result, elapsed_time
     finally:
@@ -229,7 +230,7 @@ def main():
 
     # Uruchomienie wielowątkowe (liczba wątków ograniczona do liczby otwartych okien SAP)
     with concurrent.futures.ThreadPoolExecutor(max_workers=session_count) as executor:
-        futures = [executor.submit(process_table, t_name, f, export_dir, session_queue, dynamic_vars, logger) for t_name, f in tables.items()]
+        futures = [executor.submit(process_table, t_name, table_config, export_dir, session_queue, dynamic_vars, logger) for t_name, table_config in tables.items()]
         
         for future in concurrent.futures.as_completed(futures):
             table_name, result, elapsed_time = future.result()
